@@ -5,6 +5,7 @@ const {
   submitWork,
   getFreelancerSubmissions,
   getClientSubmissions,
+  getProjectSubmissions, // ⭐ ADD THIS
   updateSubmissionStatus,
   getAllSubmissions
 } = require("../controllers/submissionController");
@@ -17,6 +18,9 @@ router.get("/freelancer/:freelancerId", getFreelancerSubmissions);
 
 // Client views submissions
 router.get("/client/:clientId", getClientSubmissions);
+
+// ⭐ VERY IMPORTANT — ADD THIS ROUTE
+router.get("/project/:projectId", getProjectSubmissions);
 
 // Client accepts / requests revision
 router.put("/:id/status", updateSubmissionStatus);

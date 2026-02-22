@@ -46,7 +46,7 @@ const WorkingProjects = () => {
 
           {/* ✅ SUBMIT WORK */}
           <Link
-            to={`/freelancer/submit-work/${p.projectId?._id}/${p.clientId}`}
+            to={`/freelancer/submit-work/${p.projectId}/${p.clientId}`}
             className="submit-btn"
           >
             Submit Work

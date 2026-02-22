@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
+import PostProject from "./pages/client/PostProject";
 import Login from "./components/Login";
 import Register from "./components/Register";
 import Navbar from "./components/Navbar";
@@ -57,6 +58,10 @@ function App() {
             <Route index element={<NewProject />} />
             <Route path="new-project" element={<NewProject />} />
             <Route path="applications" element={<ProjectApplications />} />
+
+            {/* ✅ FIXED (removed leading /) */}
+            <Route path="post-project" element={<PostProject />} />
+
             <Route path="working" element={<ProjectWorking />} />
 
             {/* client chat */}

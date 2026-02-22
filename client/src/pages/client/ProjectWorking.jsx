@@ -4,24 +4,97 @@ import api from "../../Api/axios";
 import ChatBox from "../../components/ChatBox";
 
 const ProjectWorking = () => {
+
   const { user } = useGeneral();
+
   const [projects, setProjects] = useState([]);
+  const [submissions, setSubmissions] = useState([]);
+  const [rating, setRating] = useState(5);
+  const [feedback, setFeedback] = useState("");
 
   useEffect(() => {
+
+    if (!user || !user._id) return;
+
     const fetchData = async () => {
-      const res = await api.get(`/applications/client/${user.id}`);
+      try {
 
-      const accepted = res.data.filter(p => p.status === "accepted");
+        const res = await api.get(`/applications/client/${user._id}`);
 
-      const unique = [
-        ...new Map(accepted.map(p => [p.projectId, p])).values()
-      ];
+        const accepted = res.data.filter(p => p.status === "accepted");
 
-      setProjects(unique);
+        const unique = [
+          ...new Map(
+            accepted.map(p => [String(p.projectId?._id), p])
+          ).values()
+        ];
+
+        setProjects(unique);
+
+        const subRes = await api.get(`/submissions/client/${user._id}`);
+        setSubmissions(subRes.data);
+
+      } catch (err) {
+        console.log(err);
+      }
     };
 
-    if (user?.id) fetchData();
+    fetchData();
+
   }, [user]);
+
+  const approveSubmission = async (id) => {
+    try {
+      const res = await api.put(`/submissions/${id}/status`, {
+        status: "approved"
+      });
+
+      setSubmissions(prev =>
+        prev.map(s => s._id === id ? res.data : s)
+      );
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const requestRevision = async (id) => {
+    try {
+      const res = await api.put(`/submissions/${id}/status`, {
+        status: "revision"
+      });
+
+      setSubmissions(prev =>
+        prev.map(s => s._id === id ? res.data : s)
+      );
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const submitReview = async (project) => {
+    try {
+      await api.post(`/reviews`, {
+        projectId: project.projectId?._id,
+        freelancerId: project.freelancerId,
+        clientId: user._id,
+        rating: Number(rating),
+        feedback
+      });
+
+      alert("⭐ Review Submitted");
+      setFeedback("");
+      setRating(5);
+
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  if (!user) {
+    return <p>Loading user...</p>;
+  }
+  console.log("PROJECTS DATA:", projects);
+  console.log("SUBMISSIONS DATA:", submissions);
 
   return (
     <div>
@@ -29,16 +102,81 @@ const ProjectWorking = () => {
 
       {projects.length === 0 && <p>No active projects</p>}
 
-      {projects.map(p => (
-        <div key={p._id} className="card">
-          <h4>Project: {p.projectId}</h4>
+      {projects.map(p => {
 
-          <ChatBox
-            clientId={user.id}
-            freelancerId={p.freelancerId}
-          />
-        </div>
-      ))}
+        const projectSubmission = submissions.find(
+          s => String(s.projectId) === String(p.projectId?._id)
+        );
+
+        return (
+          <div key={p._id} className="card">
+
+            <h4>Project: {p.projectId?.title}</h4>
+
+            {user?._id && p.freelancerId && (
+              <ChatBox
+                clientId={user._id}
+                freelancerId={p.freelancerId}
+              />
+            )}
+
+            {projectSubmission ? (
+              <div>
+
+                <h4>📁 Freelancer Submission</h4>
+
+                <a href={projectSubmission.workLink} target="_blank" rel="noreferrer">
+                  View Submitted Work
+                </a>
+
+                <p>Status: {projectSubmission.status}</p>
+
+                {projectSubmission.status === "submitted" && (
+                  <>
+                    <button onClick={() => approveSubmission(projectSubmission._id)}>
+                      ✅ Approve
+                    </button>
+
+                    <button onClick={() => requestRevision(projectSubmission._id)}>
+                      🔁 Request Revision
+                    </button>
+                  </>
+                )}
+
+                {projectSubmission.status === "approved" && (
+                  <div>
+
+                    <h4>⭐ Rate Freelancer</h4>
+
+                    <select value={rating} onChange={(e)=>setRating(Number(e.target.value))}>
+                      <option value={1}>⭐</option>
+                      <option value={2}>⭐⭐</option>
+                      <option value={3}>⭐⭐⭐</option>
+                      <option value={4}>⭐⭐⭐⭐</option>
+                      <option value={5}>⭐⭐⭐⭐⭐</option>
+                    </select>
+
+                    <textarea
+                      placeholder="Write feedback..."
+                      value={feedback}
+                      onChange={(e)=>setFeedback(e.target.value)}
+                    />
+
+                    <button onClick={()=>submitReview(p)}>
+                      Submit Rating
+                    </button>
+
+                  </div>
+                )}
+
+              </div>
+            ) : (
+              <p>⏳ Waiting for freelancer submission...</p>
+            )}
+
+          </div>
+        );
+      })}
     </div>
   );
 };

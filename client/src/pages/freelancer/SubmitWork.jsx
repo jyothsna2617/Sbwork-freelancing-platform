@@ -13,6 +13,13 @@ const SubmitWork = () => {
 
   const submit = async (e) => {
     e.preventDefault();
+    console.log({
+    projectId,
+    clientId,
+    freelancerId: user?.id,
+    workLink,
+    description
+  });
 
     try {
       await api.post("/submissions/submit", {
